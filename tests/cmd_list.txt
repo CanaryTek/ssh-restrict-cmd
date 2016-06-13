@@ -1,0 +1,3 @@
+^ls /tmp
+^echo just_test
+^echo test$

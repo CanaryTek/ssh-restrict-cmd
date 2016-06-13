@@ -5,32 +5,35 @@
 # Miguel Armas <kuko@canarytek.com>
 #
 # SSH key authentication allows us to restrict the commands that can be executed with a given
-# key. The problem is that we may need to pass parameters and/or be able to run more than one 
-# command with a given key. 
+# key. The problem is that we may need to pass parameters and/or be able to run more than one
+# command with a given key.
 # What we to with this command is set ssh-restrict-cmd as the allowed command for the key in the
 # authorized_keys file. SSH will run this command and save the original command (the one the user
 # is trying to run) in an enviroment variable called SSH_ORIGINAL_COMMAND, we check if this command
-# and run it only if it is included in the list of allowed command. 
+# and run it only if it is included in the list of allowed command.
 #
 # TODO: This is just a quick proof of concept, it needs a lot of work:
-# - Make sure it's secure, make it impossible to run command other than the allowed list 
+# - Make sure it's secure, make it impossible to run command other than the allowed list
 #   passing them with ";" or any other trick
 
 # Strict mode
 set -eufo pipefail
 
+# Defaults. May be overriden by command line arguments
+debug=0
+logfile="/var/log/ssh-restrict-cmd.log"
+cmdfile="/var/lib/ssh-restrict-cmd/default.conf"
+
 cmd=$SSH_ORIGINAL_COMMAND
-cmdfile=${1:-}
-debug=1
-#logfile="/var/log/ssh-restrict-cmd.log"
-logfile="ssh-restrict-cmd.log"
 
 function debug {
 	[ $debug = 1 ] && echo $*
+	return 0
 }
 
 function log {
 	echo `date`" - $*" >> $logfile
+	return 0
 }
 
 function abort_if_dangerous {
@@ -40,7 +43,30 @@ function abort_if_dangerous {
 	fi
 }
 
-debug "CMD: $cmd"
+while getopts "dl:f:" opt; do
+  case $opt in
+    d)
+      debug=1
+      ;;
+		f)
+			cmdfile=$OPTARG
+			;;
+		l)
+			logfile=$OPTARG
+			;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+debug "Command: $cmd"
+debug "Command file: $cmdfile"
 
 abort_if_dangerous $cmd
 
@@ -50,7 +76,7 @@ if echo $cmd | grep -q -f $cmdfile 2>/dev/null; then
 	exit $?
 fi
 
-echo "COMMAND DENIED"
+echo "COMMAND DENIED: $cmd"
 log "Denying cmd: $cmd"
 exit 1
 
