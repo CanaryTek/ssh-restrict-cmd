@@ -3,10 +3,11 @@ Description
 ===========
 
 Sometimes you need to allow execution of programs between different hosts.
-SSH's public key authentication allows you to do it. But if it must be done
-unattended in a cron job, you need to setup a cleartext private key un the
-source server. It is a big security problem, because if an attacker compromises
-the source server, he will have full control on any hosts that can be accessed
+SSH's public key authentication allows you to do it. If it must be done
+unattended in a cron job, you need to setup a cleartext private key in the
+source server.
+This configuration is a big security problem, because if an attacker compromises
+the source server, he will have full control of any hosts that can be accessed
 with the private key.
 
 OpenSSH has a feature that allows you to specify a given command to run when a
