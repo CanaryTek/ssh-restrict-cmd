@@ -7,7 +7,7 @@
 # SSH key authentication allows us to restrict the commands that can be executed with a given
 # key. The problem is that we may need to pass parameters and/or be able to run more than one
 # command with a given key.
-# What we to with this command is set ssh-restrict-cmd as the allowed command for the key in the
+# What we do with this command is set ssh-restrict-cmd as the allowed command for the key in the
 # authorized_keys file. SSH will run this command and save the original command (the one the user
 # is trying to run) in an enviroment variable called SSH_ORIGINAL_COMMAND, we check if this command
 # and run it only if it is included in the list of allowed command.
@@ -22,13 +22,26 @@ set -eufo pipefail
 # Defaults. May be overriden by command line arguments
 debug=0
 logfile="/var/log/ssh-restrict-cmd.log"
-cmdfile="/var/lib/ssh-restrict-cmd/default.conf"
+cmdfile="/etc/ssh-restrict-cmd/default.conf"
 
-cmd=$SSH_ORIGINAL_COMMAND
 
 function debug {
 	[ $debug = 1 ] && echo $*
 	return 0
+}
+
+function usage {
+  cat <<__EOF__
+ssh-restrict-cmd [-h] | [-d] [-l logfile] -f [command_file]
+
+Usage:
+
+  -h              : Show this help message
+  -d              : Debug. Show debug messages
+  -l logfile      : Log messages to logfile (Default: /var/log/ssh-restrict-cmd.log)
+  -f command_file : Read allowed commands from command_file (Default: /etc/ssh-restrict-cmd/default.conf)
+
+__EOF__
 }
 
 function log {
@@ -43,11 +56,15 @@ function abort_if_dangerous {
 	fi
 }
 
-while getopts "dl:f:" opt; do
+while getopts "dhl:f:" opt; do
   case $opt in
     d)
       debug=1
       ;;
+		h)
+			usage
+      exit 0
+			;;
 		f)
 			cmdfile=$OPTARG
 			;;
@@ -64,6 +81,9 @@ while getopts "dl:f:" opt; do
       ;;
   esac
 done
+
+# Read original command
+cmd=$SSH_ORIGINAL_COMMAND
 
 debug "Command: $cmd"
 debug "Command file: $cmdfile"
