@@ -45,7 +45,19 @@ command="/usr/bin/ssh-restrict-cmd -f /home/myuser/mycommands.conf -l /home/myus
 
 ### Command line options
 
+Usage is very simple. This is the usage help:
 
+```sh
+  ssh-restrict-cmd [-h] | [-d] [-l logfile] -f [command_file]
+
+  Usage:
+
+    -h              : Show this help message
+    -d              : Debug. Show debug messages
+    -l logfile      : Log messages to logfile (Default: /var/log/ssh-restrict-cmd.log)
+    -f command_file : Read allowed commands from command_file (Default: /etc/ssh-restrict-cmd/default.conf)
+
+```
 
 ### Testing commands
 
